@@ -16,7 +16,7 @@ import {
   LineChart,
   Line,
 } from "recharts"
-import { TrendingUp, TrendingDown, DollarSign, Filter, Bell, AlertTriangle, Calendar, Target } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, Filter, Bell, AlertTriangle, Calendar, Target, X } from "lucide-react"
 import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -29,6 +29,7 @@ export function Dashboard() {
   const { transacoes, produtos, saidasProdutos, cadastros } = useApp()
   const [filtroLoja, setFiltroLoja] = useState("todas")
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false)
+  const [notificacoesOcultas, setNotificacoesOcultas] = useState<string[]>([])
 
   // Filtrar transações por loja
   const transacoesFiltradas = transacoes.filter((transacao) => {
@@ -100,12 +101,19 @@ export function Dashboard() {
 
   // Notificações
   const produtosVencendo = produtos.filter((p) => {
-    const diasParaVencer = Math.ceil((new Date(p.validade).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    return diasParaVencer <= 30 && diasParaVencer > 0
+    const diasParaVencer = Math.ceil(
+      (new Date(p.validade + "T00:00:00").getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+    )
+    return diasParaVencer <= 30 && diasParaVencer > 0 && !notificacoesOcultas.includes(`vencendo-${p.id}`)
   })
 
-  const produtosBaixoEstoque = produtos.filter((p) => p.quantidadeEstoque <= 5 && p.quantidadeEstoque > 0)
-  const produtosForaEstoque = produtos.filter((p) => p.quantidadeEstoque === 0)
+  const produtosBaixoEstoque = produtos.filter(
+    (p) => p.quantidadeEstoque <= 5 && p.quantidadeEstoque > 0 && !notificacoesOcultas.includes(`baixo-${p.id}`),
+  )
+
+  const produtosForaEstoque = produtos.filter(
+    (p) => p.quantidadeEstoque === 0 && !notificacoesOcultas.includes(`fora-${p.id}`),
+  )
 
   const limparFiltros = () => {
     setFiltroLoja("todas")
@@ -113,51 +121,66 @@ export function Dashboard() {
 
   const nomeLojaFiltro = filtroLoja === "todas" ? "Todas as Lojas" : filtroLoja
 
+  const ocultarNotificacao = (tipo: string, id: string) => {
+    const chaveNotificacao = `${tipo}-${id}`
+    setNotificacoesOcultas((prev) => [...prev, chaveNotificacao])
+  }
+
   const formatarDataBrasil = (data: string) => {
-    return new Date(data).toLocaleDateString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    })
+    const dataObj = new Date(data + "T00:00:00")
+    return dataObj.toLocaleDateString("pt-BR")
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4 lg:p-6">
       {/* Header com Notificações */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard Financeiro</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">Dashboard Financeiro</h1>
         <Dialog open={notificacoesAbertas} onOpenChange={setNotificacoesAbertas}>
           <DialogTrigger asChild>
             <Button variant="outline" size="icon" className="relative">
-              <Bell className="h-4 w-4" />
+              <Bell className="h-3 w-3 md:h-4 md:w-4" />
               {produtosVencendo.length + produtosBaixoEstoque.length + produtosForaEstoque.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center text-[10px] md:text-xs">
                   {produtosVencendo.length + produtosBaixoEstoque.length + produtosForaEstoque.length}
                 </span>
               )}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[95vw] max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center">
-                <Bell className="w-5 h-5 mr-2" />
+              <DialogTitle className="flex items-center text-base md:text-lg">
+                <Bell className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                 Notificações do Sistema
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {produtosVencendo.length > 0 && (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <h4 className="font-semibold text-yellow-800 flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
+                  <h4 className="font-semibold text-yellow-800 flex items-center text-sm md:text-base">
+                    <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     Produtos Vencendo ({produtosVencendo.length})
                   </h4>
                   <div className="mt-2 space-y-1">
                     {produtosVencendo.slice(0, 3).map((produto) => (
-                      <p key={produto.id} className="text-sm text-yellow-700">
-                        {produto.produto} - Vence em{" "}
-                        {Math.ceil(
-                          (new Date(produto.validade).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
-                        )}{" "}
-                        dias
-                      </p>
+                      <div key={produto.id} className="flex items-center justify-between">
+                        <p className="text-xs md:text-sm text-yellow-700">
+                          {produto.produto} - Vence em{" "}
+                          {Math.ceil(
+                            (new Date(produto.validade + "T00:00:00").getTime() - new Date().getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          )}{" "}
+                          dias
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => ocultarNotificacao("vencendo", produto.id)}
+                          className="h-5 w-5 md:h-6 md:w-6 p-0"
+                        >
+                          <X className="h-2 w-2 md:h-3 md:w-3" />
+                        </Button>
+                      </div>
                     ))}
                     {produtosVencendo.length > 3 && (
                       <p className="text-xs text-yellow-600">E mais {produtosVencendo.length - 3} produtos...</p>
@@ -168,15 +191,25 @@ export function Dashboard() {
 
               {produtosBaixoEstoque.length > 0 && (
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded">
-                  <h4 className="font-semibold text-orange-800 flex items-center">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
+                  <h4 className="font-semibold text-orange-800 flex items-center text-sm md:text-base">
+                    <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     Estoque Baixo ({produtosBaixoEstoque.length})
                   </h4>
                   <div className="mt-2 space-y-1">
                     {produtosBaixoEstoque.slice(0, 3).map((produto) => (
-                      <p key={produto.id} className="text-sm text-orange-700">
-                        {produto.produto} - Restam {produto.quantidadeEstoque} unidades
-                      </p>
+                      <div key={produto.id} className="flex items-center justify-between">
+                        <p className="text-xs md:text-sm text-orange-700">
+                          {produto.produto} - Restam {produto.quantidadeEstoque} unidades
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => ocultarNotificacao("baixo", produto.id)}
+                          className="h-5 w-5 md:h-6 md:w-6 p-0"
+                        >
+                          <X className="h-2 w-2 md:h-3 md:w-3" />
+                        </Button>
+                      </div>
                     ))}
                     {produtosBaixoEstoque.length > 3 && (
                       <p className="text-xs text-orange-600">E mais {produtosBaixoEstoque.length - 3} produtos...</p>
@@ -187,15 +220,23 @@ export function Dashboard() {
 
               {produtosForaEstoque.length > 0 && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded">
-                  <h4 className="font-semibold text-red-800 flex items-center">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
+                  <h4 className="font-semibold text-red-800 flex items-center text-sm md:text-base">
+                    <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     Fora de Estoque ({produtosForaEstoque.length})
                   </h4>
                   <div className="mt-2 space-y-1">
                     {produtosForaEstoque.slice(0, 3).map((produto) => (
-                      <p key={produto.id} className="text-sm text-red-700">
-                        {produto.produto} - Sem estoque
-                      </p>
+                      <div key={produto.id} className="flex items-center justify-between">
+                        <p className="text-xs md:text-sm text-red-700">{produto.produto} - Sem estoque</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => ocultarNotificacao("fora", produto.id)}
+                          className="h-5 w-5 md:h-6 md:w-6 p-0"
+                        >
+                          <X className="h-2 w-2 md:h-3 md:w-3" />
+                        </Button>
+                      </div>
                     ))}
                     {produtosForaEstoque.length > 3 && (
                       <p className="text-xs text-red-600">E mais {produtosForaEstoque.length - 3} produtos...</p>
@@ -206,7 +247,7 @@ export function Dashboard() {
 
               {produtosVencendo.length + produtosBaixoEstoque.length + produtosForaEstoque.length === 0 && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <p className="text-green-700 text-center">✅ Nenhuma notificação no momento</p>
+                  <p className="text-green-700 text-center text-sm md:text-base">✅ Nenhuma notificação no momento</p>
                 </div>
               )}
             </div>
@@ -217,23 +258,27 @@ export function Dashboard() {
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="w-4 h-4 mr-2" />
+          <CardTitle className="flex items-center text-base md:text-lg">
+            <Filter className="w-4 h-4 md:w-5 md:h-5 mr-2" />
             Filtros do Dashboard
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="filtroLoja">Filtrar por Loja</Label>
+              <Label htmlFor="filtroLoja" className="text-sm md:text-base">
+                Filtrar por Loja
+              </Label>
               <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm md:text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas as Lojas</SelectItem>
+                  <SelectItem value="todas" className="text-sm md:text-base">
+                    Todas as Lojas
+                  </SelectItem>
                   {cadastros.lojas.map((loja) => (
-                    <SelectItem key={loja} value={loja}>
+                    <SelectItem key={loja} value={loja} className="text-sm md:text-base">
                       {loja}
                     </SelectItem>
                   ))}
@@ -241,13 +286,13 @@ export function Dashboard() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button variant="outline" onClick={limparFiltros}>
+              <Button variant="outline" onClick={limparFiltros} className="text-sm md:text-base">
                 Limpar Filtros
               </Button>
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground">
               Exibindo dados para: <strong>{nomeLojaFiltro}</strong>
             </p>
           </div>
@@ -255,21 +300,21 @@ export function Dashboard() {
       </Card>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs md:text-sm font-medium">Saldo Atual</CardTitle>
+            <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${saldoAtual >= 0 ? "text-green-600" : "text-red-600"}`}>
+            <div className={`text-lg md:text-2xl font-bold ${saldoAtual >= 0 ? "text-green-600" : "text-red-600"}`}>
               R$ {saldoAtual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {saldoAtual >= 0 ? (
-                <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                <TrendingUp className="h-2 w-2 md:h-3 md:w-3 mr-1 text-green-600" />
               ) : (
-                <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                <TrendingDown className="h-2 w-2 md:h-3 md:w-3 mr-1 text-red-600" />
               )}
               {transacoesFiltradas.length} transações
             </div>
@@ -278,11 +323,11 @@ export function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Crédito</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Total Crédito</CardTitle>
+            <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-lg md:text-2xl font-bold text-green-600">
               R$ {totalCredito.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -293,11 +338,11 @@ export function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Débito</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Total Débito</CardTitle>
+            <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg md:text-2xl font-bold text-red-600">
               R$ {totalDebito.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -308,11 +353,11 @@ export function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projeção Próximo Mês</CardTitle>
-            <Target className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Projeção Próximo Mês</CardTitle>
+            <Target className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-lg md:text-2xl font-bold text-blue-600">
               R$ {projecaoProximoMes().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">Baseado em crescimento de 5%</p>
@@ -321,17 +366,17 @@ export function Dashboard() {
       </div>
 
       {/* Gráficos Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Transações por Mês - {nomeLojaFiltro}</CardTitle>
+            <CardTitle className="text-base md:text-lg">Transações por Mês - {nomeLojaFiltro}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={dadosTransacoesPorMes}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
+                <XAxis dataKey="mes" fontSize={12} />
+                <YAxis fontSize={12} />
                 <Tooltip
                   formatter={(value) => `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                 />
@@ -344,10 +389,10 @@ export function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição Crédito vs Débito - {nomeLojaFiltro}</CardTitle>
+            <CardTitle className="text-base md:text-lg">Distribuição Crédito vs Débito - {nomeLojaFiltro}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={dadosCategoriasTransacoes}
@@ -358,6 +403,7 @@ export function Dashboard() {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
+                  fontSize={12}
                 >
                   {dadosCategoriasTransacoes.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={index === 0 ? "#22c55e" : "#ef4444"} />
@@ -373,30 +419,30 @@ export function Dashboard() {
       </div>
 
       {/* Análises Financeiras Avançadas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Análise de Tendência</CardTitle>
+            <CardTitle className="text-base md:text-lg">Análise de Tendência</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Tendência Atual:</span>
+                <span className="text-xs md:text-sm font-medium">Tendência Atual:</span>
                 <span
-                  className={`font-bold ${calcularTendencia() === "Crescimento" ? "text-green-600" : calcularTendencia() === "Declínio" ? "text-red-600" : "text-yellow-600"}`}
+                  className={`font-bold text-xs md:text-sm ${calcularTendencia() === "Crescimento" ? "text-green-600" : calcularTendencia() === "Declínio" ? "text-red-600" : "text-yellow-600"}`}
                 >
                   {calcularTendencia()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Média Móvel (3 meses):</span>
-                <span className="font-bold">
+                <span className="text-xs md:text-sm font-medium">Média Móvel (3 meses):</span>
+                <span className="font-bold text-xs md:text-sm">
                   R$ {calcularMediaMovel().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="mt-4 p-3 bg-blue-50 rounded">
-                <h4 className="font-semibold text-blue-800 mb-2">💡 Dicas para Melhorar:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+                <h4 className="font-semibold text-blue-800 mb-2 text-xs md:text-sm">💡 Dicas para Melhorar:</h4>
+                <ul className="text-xs text-blue-700 space-y-1">
                   <li>• Diversifique suas fontes de receita</li>
                   <li>• Monitore gastos desnecessários</li>
                   <li>• Invista em marketing para aumentar vendas</li>
@@ -409,13 +455,13 @@ export function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Gestão de Riscos</CardTitle>
+            <CardTitle className="text-base md:text-lg">Gestão de Riscos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="p-3 bg-yellow-50 rounded">
-                <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Alertas de Risco:</h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
+                <h4 className="font-semibold text-yellow-800 mb-2 text-xs md:text-sm">⚠️ Alertas de Risco:</h4>
+                <ul className="text-xs text-yellow-700 space-y-1">
                   {saldoAtual < 0 && <li>• Saldo negativo - Atenção ao fluxo de caixa</li>}
                   {totalDebito > totalCredito * 0.8 && <li>• Gastos altos em relação à receita</li>}
                   {produtosForaEstoque.length > 0 && <li>• {produtosForaEstoque.length} produtos fora de estoque</li>}
@@ -424,8 +470,8 @@ export function Dashboard() {
               </div>
 
               <div className="p-3 bg-green-50 rounded">
-                <h4 className="font-semibold text-green-800 mb-2">💰 Como Aumentar Capital:</h4>
-                <ul className="text-sm text-green-700 space-y-1">
+                <h4 className="font-semibold text-green-800 mb-2 text-xs md:text-sm">💰 Como Aumentar Capital:</h4>
+                <ul className="text-xs text-green-700 space-y-1">
                   <li>• Ofereça promoções para produtos próximos ao vencimento</li>
                   <li>• Implemente programa de fidelidade</li>
                   <li>• Analise produtos mais vendidos e aumente estoque</li>
@@ -440,10 +486,10 @@ export function Dashboard() {
       {/* Linha de Tendência */}
       <Card>
         <CardHeader>
-          <CardTitle>Evolução do Saldo ao Longo do Tempo</CardTitle>
+          <CardTitle className="text-base md:text-lg">Evolução do Saldo ao Longo do Tempo</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart
               data={dadosTransacoesPorMes.map((item) => ({
                 ...item,
@@ -451,8 +497,8 @@ export function Dashboard() {
               }))}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
+              <XAxis dataKey="mes" fontSize={12} />
+              <YAxis fontSize={12} />
               <Tooltip
                 formatter={(value) => `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
               />

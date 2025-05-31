@@ -71,15 +71,14 @@ export function CadastrosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Cadastros do Sistema</h2>
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4 lg:p-6">
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">Cadastros do Sistema</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Primeira linha */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {/* Lojas */}
         <Card>
           <CardHeader>
-            <CardTitle>Lojas</CardTitle>
+            <CardTitle className="text-base md:text-lg">Lojas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex space-x-2">
@@ -88,17 +87,18 @@ export function CadastrosPage() {
                 value={novaLoja}
                 onChange={(e) => setNovaLoja(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && adicionarLoja()}
+                className="text-sm md:text-base"
               />
               <Button onClick={adicionarLoja} size="sm">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </div>
             <div className="space-y-2">
               {cadastros.lojas.map((loja) => (
                 <div key={loja} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">{loja}</span>
+                  <span className="text-xs md:text-sm">{loja}</span>
                   <Button size="sm" variant="ghost" onClick={() => removerLoja(loja)}>
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2 md:w-3 md:h-3" />
                   </Button>
                 </div>
               ))}
@@ -109,7 +109,7 @@ export function CadastrosPage() {
         {/* Descrições */}
         <Card>
           <CardHeader>
-            <CardTitle>Descrições</CardTitle>
+            <CardTitle className="text-base md:text-lg">Descrições</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex space-x-2">
@@ -118,17 +118,18 @@ export function CadastrosPage() {
                 value={novaDescricao}
                 onChange={(e) => setNovaDescricao(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && adicionarDescricao()}
+                className="text-sm md:text-base"
               />
               <Button onClick={adicionarDescricao} size="sm">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </div>
             <div className="space-y-2">
               {cadastros.descricoes.map((descricao) => (
                 <div key={descricao} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">{descricao}</span>
+                  <span className="text-xs md:text-sm">{descricao}</span>
                   <Button size="sm" variant="ghost" onClick={() => removerDescricao(descricao)}>
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2 md:w-3 md:h-3" />
                   </Button>
                 </div>
               ))}
@@ -139,7 +140,7 @@ export function CadastrosPage() {
         {/* Categorias de Produtos */}
         <Card>
           <CardHeader>
-            <CardTitle>Categorias de Produtos</CardTitle>
+            <CardTitle className="text-base md:text-lg">Categorias de Produtos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex space-x-2">
@@ -148,17 +149,18 @@ export function CadastrosPage() {
                 value={novaCategoria}
                 onChange={(e) => setNovaCategoria(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && adicionarCategoria()}
+                className="text-sm md:text-base"
               />
               <Button onClick={adicionarCategoria} size="sm">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </div>
             <div className="space-y-2">
               {cadastros.categoriasProdutos.map((categoria) => (
                 <div key={categoria} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">{categoria}</span>
+                  <span className="text-xs md:text-sm">{categoria}</span>
                   <Button size="sm" variant="ghost" onClick={() => removerCategoria(categoria)}>
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2 md:w-3 md:h-3" />
                   </Button>
                 </div>
               ))}
@@ -166,11 +168,10 @@ export function CadastrosPage() {
           </CardContent>
         </Card>
 
-        {/* Segunda linha */}
         {/* Marcas */}
         <Card>
           <CardHeader>
-            <CardTitle>Marcas</CardTitle>
+            <CardTitle className="text-base md:text-lg">Marcas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex space-x-2">
@@ -179,17 +180,18 @@ export function CadastrosPage() {
                 value={novaMarca}
                 onChange={(e) => setNovaMarca(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && adicionarMarca()}
+                className="text-sm md:text-base"
               />
               <Button onClick={adicionarMarca} size="sm">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </div>
             <div className="space-y-2">
               {cadastros.marcas.map((marca) => (
                 <div key={marca} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">{marca}</span>
+                  <span className="text-xs md:text-sm">{marca}</span>
                   <Button size="sm" variant="ghost" onClick={() => removerMarca(marca)}>
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2 md:w-3 md:h-3" />
                   </Button>
                 </div>
               ))}

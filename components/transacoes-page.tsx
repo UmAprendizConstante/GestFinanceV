@@ -72,7 +72,7 @@ export function TransacoesPage() {
     } else {
       adicionarTransacao(formData)
     }
-    setDialogAberto(false)
+    // Não fechar o dialog automaticamente - apenas resetar o form
     resetForm()
   }
 
@@ -116,9 +116,9 @@ export function TransacoesPage() {
   }
 
   const formatarDataBrasil = (data: string) => {
-    return new Date(data).toLocaleDateString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    })
+    // Corrigir problema de fuso horário
+    const dataObj = new Date(data + "T00:00:00")
+    return dataObj.toLocaleDateString("pt-BR")
   }
 
   return (
@@ -132,7 +132,7 @@ export function TransacoesPage() {
               Nova Transação
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>{transacaoEditando ? "Editar Transação" : "Nova Transação"}</DialogTitle>
             </DialogHeader>
@@ -249,7 +249,7 @@ export function TransacoesPage() {
 
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setDialogAberto(false)}>
-                  Cancelar
+                  Fechar
                 </Button>
                 <Button type="submit">{transacaoEditando ? "Salvar" : "Adicionar"}</Button>
               </div>
@@ -259,7 +259,7 @@ export function TransacoesPage() {
 
         {/* Dialog para adicionar nova descrição */}
         <Dialog open={dialogDescricaoAberto} onOpenChange={setDialogDescricaoAberto}>
-          <DialogContent>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Adicionar Nova Descrição</DialogTitle>
             </DialogHeader>

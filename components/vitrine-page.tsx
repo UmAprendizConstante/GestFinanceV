@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -31,62 +30,67 @@ export function VitrinePage() {
     setFiltroProduto("")
   }
 
+  const formatarDataBrasil = (data: string) => {
+    const dataObj = new Date(data + "T00:00:00")
+    return dataObj.toLocaleDateString("pt-BR")
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-1">
           <Input
             value={nomeVitrine}
             onChange={(e) => setNomeVitrine(e.target.value)}
-            className="text-2xl font-bold border-none p-0 h-auto bg-transparent"
+            className="text-xl md:text-2xl lg:text-3xl font-bold border-none p-0 h-auto bg-transparent"
             placeholder="Nome da Vitrine"
           />
-          <p className="text-muted-foreground mt-1">Visualização geral dos produtos</p>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">Visualização geral dos produtos</p>
         </div>
       </div>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Estoque</CardTitle>
-            <Package className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Em Estoque</CardTitle>
+            <Package className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{produtosEmEstoque.length}</div>
+            <div className="text-lg md:text-2xl font-bold text-green-600">{produtosEmEstoque.length}</div>
             <p className="text-xs text-muted-foreground">produtos disponíveis</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fora de Estoque</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Fora de Estoque</CardTitle>
+            <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{produtosForaEstoque.length}</div>
+            <div className="text-lg md:text-2xl font-bold text-red-600">{produtosForaEstoque.length}</div>
             <p className="text-xs text-muted-foreground">produtos esgotados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Produtos</CardTitle>
-            <Eye className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Total Produtos</CardTitle>
+            <Eye className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{produtos.length}</div>
+            <div className="text-lg md:text-2xl font-bold text-blue-600">{produtos.length}</div>
             <p className="text-xs text-muted-foreground">produtos cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <Package className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-xs md:text-sm font-medium">Valor Total</CardTitle>
+            <Package className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-sm md:text-2xl font-bold text-purple-600">
               R$ {valorTotalVitrine.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">valor em estoque</p>
@@ -97,108 +101,167 @@ export function VitrinePage() {
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="w-4 h-4 mr-2" />
+          <CardTitle className="flex items-center text-base md:text-lg">
+            <Filter className="w-4 h-4 md:w-5 md:h-5 mr-2" />
             Filtros
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="filtroSituacao">Filtrar por situação</Label>
+              <Label htmlFor="filtroSituacao" className="text-sm md:text-base">
+                Filtrar por situação
+              </Label>
               <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm md:text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas as situações</SelectItem>
-                  <SelectItem value="Em Estoque">Em Estoque</SelectItem>
-                  <SelectItem value="Fora de Estoque">Fora de Estoque</SelectItem>
+                  <SelectItem value="todas" className="text-sm md:text-base">
+                    Todas as situações
+                  </SelectItem>
+                  <SelectItem value="Em Estoque" className="text-sm md:text-base">
+                    Em Estoque
+                  </SelectItem>
+                  <SelectItem value="Fora de Estoque" className="text-sm md:text-base">
+                    Fora de Estoque
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="filtroProduto">Filtrar por produto</Label>
+              <Label htmlFor="filtroProduto" className="text-sm md:text-base">
+                Filtrar por produto
+              </Label>
               <Input
                 id="filtroProduto"
                 placeholder="Digite o nome do produto"
                 value={filtroProduto}
                 onChange={(e) => setFiltroProduto(e.target.value)}
+                className="text-sm md:text-base"
               />
             </div>
           </div>
           <div className="mt-4">
-            <Button variant="outline" onClick={limparFiltros}>
+            <Button variant="outline" onClick={limparFiltros} className="text-sm md:text-base">
               Limpar Filtros
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tabela da Vitrine */}
+      {/* Cards da Vitrine */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Eye className="w-5 h-5 mr-2" />
+          <CardTitle className="flex items-center text-base md:text-lg">
+            <Eye className="w-4 h-4 md:w-5 md:h-5 mr-2" />
             {nomeVitrine}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Marca</TableHead>
-                  <TableHead>Data de Compra</TableHead>
-                  <TableHead>Validade</TableHead>
-                  <TableHead>Valor Unitário</TableHead>
-                  <TableHead>Qt em Estoque</TableHead>
-                  <TableHead>Vl em Estoque</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtosFiltrados.map((produto) => {
-                  const dataValidade = new Date(produto.validade)
-                  const hoje = new Date()
-                  const diasParaVencer = Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-                  const proximoVencimento = diasParaVencer <= 30 && diasParaVencer > 0
-
-                  return (
-                    <TableRow key={produto.id} className={proximoVencimento ? "bg-yellow-50" : ""}>
-                      <TableCell className="font-medium">{produto.produto}</TableCell>
-                      <TableCell className="font-mono text-sm">{produto.codigo}</TableCell>
-                      <TableCell>{produto.marca}</TableCell>
-                      <TableCell>{new Date(produto.dataCompra).toLocaleDateString("pt-BR")}</TableCell>
-                      <TableCell className={proximoVencimento ? "text-yellow-600 font-medium" : ""}>
-                        {new Date(produto.validade).toLocaleDateString("pt-BR")}
-                        {proximoVencimento && (
-                          <div className="text-xs text-yellow-600">Vence em {diasParaVencer} dias</div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        R$ {produto.unidadeComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={produto.quantidadeEstoque === 0 ? "text-red-600 font-medium" : ""}>
-                          {produto.quantidadeEstoque}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        R$ {produto.valorTotalEstoque.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-          {produtosFiltrados.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+          {produtosFiltrados.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
               {produtos.length === 0
                 ? "Nenhum produto cadastrado"
                 : "Nenhum produto encontrado com os filtros aplicados"}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {produtosFiltrados.map((produto) => {
+                const dataValidade = new Date(produto.validade + "T00:00:00")
+                const hoje = new Date()
+                const diasParaVencer = Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+                const proximoVencimento = diasParaVencer <= 30 && diasParaVencer > 0
+
+                return (
+                  <Card
+                    key={produto.id}
+                    className={`border-2 hover:shadow-md transition-shadow ${proximoVencimento ? "bg-yellow-50 border-yellow-200" : ""}`}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-sm md:text-base font-semibold line-clamp-2">
+                            {produto.produto}
+                          </CardTitle>
+                          <p className="text-xs md:text-sm text-muted-foreground font-mono mt-1">{produto.codigo}</p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            produto.quantidadeEstoque === 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {produto.quantidadeEstoque === 0 ? "Sem Estoque" : "Em Estoque"}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
+                        <div>
+                          <span className="font-medium">Marca:</span>
+                          <p className="text-muted-foreground">{produto.marca}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Data Compra:</span>
+                          <p className="text-muted-foreground">{formatarDataBrasil(produto.dataCompra)}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 text-xs md:text-sm">
+                        <div>
+                          <span className="font-medium">Validade:</span>
+                          <p
+                            className={`${proximoVencimento ? "text-yellow-600 font-medium" : "text-muted-foreground"}`}
+                          >
+                            {formatarDataBrasil(produto.validade)}
+                            {proximoVencimento && (
+                              <span className="block text-xs text-yellow-600">Vence em {diasParaVencer} dias</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
+                        <div>
+                          <span className="font-medium">Valor Unitário:</span>
+                          <p className="text-muted-foreground">
+                            R$ {produto.unidadeComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Qt em Estoque:</span>
+                          <p
+                            className={`font-semibold ${produto.quantidadeEstoque === 0 ? "text-red-600" : "text-muted-foreground"}`}
+                          >
+                            {produto.quantidadeEstoque}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 text-xs md:text-sm">
+                        <div>
+                          <span className="font-medium">Valor em Estoque:</span>
+                          <p className="text-muted-foreground font-semibold text-green-600">
+                            R$ {produto.valorTotalEstoque.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {proximoVencimento && (
+                        <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-xs">
+                          <span className="text-yellow-800 font-medium">⚠️ Produto próximo ao vencimento!</span>
+                        </div>
+                      )}
+
+                      {produto.quantidadeEstoque <= 5 && produto.quantidadeEstoque > 0 && (
+                        <div className="bg-orange-100 border border-orange-300 rounded p-2 text-xs">
+                          <span className="text-orange-800 font-medium">📦 Estoque baixo!</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </CardContent>

@@ -119,7 +119,7 @@ export function SaidaProdutosPage() {
       adicionarSaidaProduto(dadosSaida)
     }
 
-    setDialogAberto(false)
+    // Não fechar o dialog automaticamente - apenas resetar o form
     resetForm()
   }
 
@@ -161,9 +161,9 @@ export function SaidaProdutosPage() {
   }
 
   const formatarDataBrasil = (data: string) => {
-    return new Date(data).toLocaleDateString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    })
+    // Corrigir problema de fuso horário
+    const dataObj = new Date(data + "T00:00:00")
+    return dataObj.toLocaleDateString("pt-BR")
   }
 
   return (
@@ -177,7 +177,7 @@ export function SaidaProdutosPage() {
               Nova Saída
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>{saidaEditando ? "Editar Saída" : "Nova Saída de Produto"}</DialogTitle>
             </DialogHeader>
@@ -351,7 +351,7 @@ export function SaidaProdutosPage() {
 
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setDialogAberto(false)}>
-                  Cancelar
+                  Fechar
                 </Button>
                 <Button type="submit" disabled={!produtoSelecionado}>
                   {saidaEditando ? "Salvar" : "Registrar Saída"}
@@ -363,7 +363,7 @@ export function SaidaProdutosPage() {
 
         {/* Dialog para adicionar nova descrição */}
         <Dialog open={dialogDescricaoAberto} onOpenChange={setDialogDescricaoAberto}>
-          <DialogContent>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Adicionar Nova Descrição</DialogTitle>
             </DialogHeader>
