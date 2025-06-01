@@ -21,9 +21,9 @@ export function RelatoriosPage() {
   const [margemDireita, setMargemDireita] = useState(20)
 
   const transacoesFiltradas = transacoes.filter((transacao) => {
-    const dataTransacao = new Date(transacao.data)
-    const dataInicio = filtroData.inicio ? new Date(filtroData.inicio) : null
-    const dataFim = filtroData.fim ? new Date(filtroData.fim) : null
+    const dataTransacao = new Date(transacao.data + "T00:00:00")
+    const dataInicio = filtroData.inicio ? new Date(filtroData.inicio + "T00:00:00") : null
+    const dataFim = filtroData.fim ? new Date(filtroData.fim + "T00:00:00") : null
 
     const dentroDoIntervalo = (!dataInicio || dataTransacao >= dataInicio) && (!dataFim || dataTransacao <= dataFim)
 
@@ -82,9 +82,7 @@ export function RelatoriosPage() {
   }
 
   const formatarDataBrasil = (data: string) => {
-    return new Date(data).toLocaleDateString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    })
+    return new Date(data + "T00:00:00").toLocaleDateString("pt-BR")
   }
 
   const imprimir = () => {
@@ -275,7 +273,7 @@ export function RelatoriosPage() {
       {/* Conteúdo do Relatório */}
       <div id="relatorio-conteudo">
         <div className="header">
-          <h1 style={{ fontSize: "24px", marginBottom: "10px" }}>Relatório Financeiro da {nomeLojaRelatorio}</h1>
+          <h1 style={{ fontSize: "24px", marginBottom: "10px" }}>Relatório Financeiro - {nomeLojaRelatorio}</h1>
           <p style={{ fontSize: "14px", color: "#666" }}>
             Período: {filtroData.inicio ? formatarDataBrasil(filtroData.inicio) : "Início"} até{" "}
             {filtroData.fim ? formatarDataBrasil(filtroData.fim) : "Fim"}

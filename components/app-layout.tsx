@@ -24,6 +24,7 @@ const menuItems = [
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Vitrine", url: "/vitrine", icon: Eye },
   { title: "Saída Produtos", url: "/saida-produtos", icon: ShoppingCart },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ]
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

@@ -6,17 +6,31 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useApp, type Produto } from "@/components/app-provider"
-import { Plus, Edit, Trash2, Package, Filter } from "lucide-react"
+import { Plus, Edit, Trash2, Package, Filter, UserPlus } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandList, CommandInput, CommandItem, CommandGroup, CommandEmpty } from "@/components/ui/command"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 export function ProdutosPage() {
-  const { produtos, cadastros, adicionarProduto, editarProduto, excluirProduto } = useApp()
+  const { produtos, cadastros, adicionarProduto, editarProduto, excluirProduto, atualizarCadastros } = useApp()
   const [dialogAberto, setDialogAberto] = useState(false)
+  const [dialogProdutoAberto, setDialogProdutoAberto] = useState(false)
+  const [dialogCategoriaAberto, setDialogCategoriaAberto] = useState(false)
+  const [dialogMarcaAberto, setDialogMarcaAberto] = useState(false)
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null)
+  const [novoProdutoNome, setNovoProdutoNome] = useState("")
+  const [novaCategoria, setNovaCategoria] = useState("")
+  const [novaMarca, setNovaMarca] = useState("")
+  const [comboboxProdutoAberto, setComboboxProdutoAberto] = useState(false)
+  const [comboboxCategoriaAberto, setComboboxCategoriaAberto] = useState(false)
+  const [comboboxMarcaAberto, setComboboxMarcaAberto] = useState(false)
+  const [pesquisaProduto, setPesquisaProduto] = useState("")
+  const [pesquisaCategoria, setPesquisaCategoria] = useState("")
+  const [pesquisaMarca, setPesquisaMarca] = useState("")
   const [formData, setFormData] = useState({
     dataCompra: "",
     produto: "",
@@ -38,8 +52,21 @@ export function ProdutosPage() {
     dataValidade: "",
   })
 
+  // Filtrar produtos para o combobox
+  const produtosFiltrados = (cadastros.produtos || []).filter((produto) =>
+    produto.toLowerCase().includes(pesquisaProduto.toLowerCase()),
+  )
+
+  // Filtrar categorias para o combobox
+  const categoriasFiltradas = cadastros.categoriasProdutos.filter((categoria) =>
+    categoria.toLowerCase().includes(pesquisaCategoria.toLowerCase()),
+  )
+
+  // Filtrar marcas para o combobox
+  const marcasFiltradas = cadastros.marcas.filter((marca) => marca.toLowerCase().includes(pesquisaMarca.toLowerCase()))
+
   // Aplicar filtros aos produtos
-  const produtosFiltrados = produtos.filter((produto) => {
+  const produtosFiltradosLista = produtos.filter((produto) => {
     return (
       produto.codigo.toLowerCase().includes(filtros.codigo.toLowerCase()) &&
       produto.produto.toLowerCase().includes(filtros.produto.toLowerCase()) &&
@@ -61,18 +88,24 @@ export function ProdutosPage() {
       valorUnitario: 0,
       descontoAplicado: 0,
     })
+    setPesquisaProduto("")
+    setPesquisaCategoria("")
+    setPesquisaMarca("")
     setProdutoEditando(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (produtoEditando) {
-      editarProduto(produtoEditando.id, formData)
-    } else {
-      adicionarProduto(formData)
+    try {
+      if (produtoEditando) {
+        await editarProduto(produtoEditando.id, formData)
+      } else {
+        await adicionarProduto(formData)
+      }
+      resetForm()
+    } catch (error) {
+      console.error("Erro ao salvar produto:", error)
     }
-    // Não fechar o dialog automaticamente - apenas resetar o form
-    resetForm()
   }
 
   const handleEdit = (produto: Produto) => {
@@ -88,12 +121,64 @@ export function ProdutosPage() {
       valorUnitario: produto.valorUnitario,
       descontoAplicado: produto.descontoAplicado,
     })
+    setPesquisaProduto(produto.produto)
+    setPesquisaCategoria(produto.categoria)
+    setPesquisaMarca(produto.marca)
     setDialogAberto(true)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este produto?")) {
-      excluirProduto(id)
+      try {
+        await excluirProduto(id)
+      } catch (error) {
+        console.error("Erro ao excluir produto:", error)
+      }
+    }
+  }
+
+  const adicionarNovoProdutoNome = async () => {
+    if (novoProdutoNome.trim()) {
+      try {
+        const novosProdutos = [...(cadastros.produtos || []), novoProdutoNome.trim()].sort()
+        await atualizarCadastros("produtos" as keyof typeof cadastros, novosProdutos)
+        setFormData({ ...formData, produto: novoProdutoNome.trim() })
+        setPesquisaProduto(novoProdutoNome.trim())
+        setNovoProdutoNome("")
+        setDialogProdutoAberto(false)
+      } catch (error) {
+        console.error("Erro ao adicionar produto:", error)
+      }
+    }
+  }
+
+  const adicionarNovaCategoria = async () => {
+    if (novaCategoria.trim()) {
+      try {
+        const novasCategorias = [...cadastros.categoriasProdutos, novaCategoria.trim()].sort()
+        await atualizarCadastros("categoriasProdutos", novasCategorias)
+        setFormData({ ...formData, categoria: novaCategoria.trim() })
+        setPesquisaCategoria(novaCategoria.trim())
+        setNovaCategoria("")
+        setDialogCategoriaAberto(false)
+      } catch (error) {
+        console.error("Erro ao adicionar categoria:", error)
+      }
+    }
+  }
+
+  const adicionarNovaMarca = async () => {
+    if (novaMarca.trim()) {
+      try {
+        const novasMarcas = [...cadastros.marcas, novaMarca.trim()].sort()
+        await atualizarCadastros("marcas", novasMarcas)
+        setFormData({ ...formData, marca: novaMarca.trim() })
+        setPesquisaMarca(novaMarca.trim())
+        setNovaMarca("")
+        setDialogMarcaAberto(false)
+      } catch (error) {
+        console.error("Erro ao adicionar marca:", error)
+      }
     }
   }
 
@@ -108,7 +193,6 @@ export function ProdutosPage() {
   }
 
   const formatarDataBrasil = (data: string) => {
-    // Corrigir problema de fuso horário
     const dataObj = new Date(data + "T00:00:00")
     return dataObj.toLocaleDateString("pt-BR")
   }
@@ -163,35 +247,123 @@ export function ProdutosPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="produto" className="text-sm md:text-base">
-                    Nome do Produto
-                  </Label>
-                  <Input
-                    id="produto"
-                    value={formData.produto}
-                    onChange={(e) => setFormData({ ...formData, produto: e.target.value })}
-                    required
-                    className="text-sm md:text-base"
-                  />
+              <div>
+                <Label htmlFor="produto" className="text-sm md:text-base">
+                  Nome do Produto
+                </Label>
+                <div className="flex space-x-2">
+                  <Popover open={comboboxProdutoAberto} onOpenChange={setComboboxProdutoAberto}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxProdutoAberto}
+                        className="flex-1 justify-between text-sm md:text-base"
+                      >
+                        {formData.produto || "Selecione o produto..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Pesquisar produto..."
+                          value={pesquisaProduto}
+                          onValueChange={setPesquisaProduto}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                          <CommandGroup className="max-h-64 overflow-auto">
+                            {produtosFiltrados.map((produto) => (
+                              <CommandItem
+                                key={produto}
+                                value={produto}
+                                onSelect={(currentValue) => {
+                                  setFormData({ ...formData, produto: currentValue })
+                                  setPesquisaProduto(currentValue)
+                                  setComboboxProdutoAberto(false)
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${formData.produto === produto ? "opacity-100" : "opacity-0"}`}
+                                />
+                                {produto}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDialogProdutoAberto(true)}
+                    title="Adicionar novo produto"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
                 </div>
-                <div>
-                  <Label htmlFor="marca" className="text-sm md:text-base">
-                    Marca
-                  </Label>
-                  <Select value={formData.marca} onValueChange={(value) => setFormData({ ...formData, marca: value })}>
-                    <SelectTrigger className="text-sm md:text-base">
-                      <SelectValue placeholder="Selecione a marca" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cadastros.marcas.map((marca) => (
-                        <SelectItem key={marca} value={marca} className="text-sm md:text-base">
-                          {marca}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="marca" className="text-sm md:text-base">
+                  Marca
+                </Label>
+                <div className="flex space-x-2">
+                  <Popover open={comboboxMarcaAberto} onOpenChange={setComboboxMarcaAberto}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxMarcaAberto}
+                        className="flex-1 justify-between text-sm md:text-base"
+                      >
+                        {formData.marca || "Selecione a marca..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Pesquisar marca..."
+                          value={pesquisaMarca}
+                          onValueChange={setPesquisaMarca}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma marca encontrada.</CommandEmpty>
+                          <CommandGroup className="max-h-64 overflow-auto">
+                            {marcasFiltradas.map((marca) => (
+                              <CommandItem
+                                key={marca}
+                                value={marca}
+                                onSelect={(currentValue) => {
+                                  setFormData({ ...formData, marca: currentValue })
+                                  setPesquisaMarca(currentValue)
+                                  setComboboxMarcaAberto(false)
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${formData.marca === marca ? "opacity-100" : "opacity-0"}`}
+                                />
+                                {marca}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDialogMarcaAberto(true)}
+                    title="Adicionar nova marca"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
 
@@ -199,21 +371,60 @@ export function ProdutosPage() {
                 <Label htmlFor="categoria" className="text-sm md:text-base">
                   Categoria
                 </Label>
-                <Select
-                  value={formData.categoria}
-                  onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                >
-                  <SelectTrigger className="text-sm md:text-base">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cadastros.categoriasProdutos.map((categoria) => (
-                      <SelectItem key={categoria} value={categoria} className="text-sm md:text-base">
-                        {categoria}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex space-x-2">
+                  <Popover open={comboboxCategoriaAberto} onOpenChange={setComboboxCategoriaAberto}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxCategoriaAberto}
+                        className="flex-1 justify-between text-sm md:text-base"
+                      >
+                        {formData.categoria || "Selecione a categoria..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Pesquisar categoria..."
+                          value={pesquisaCategoria}
+                          onValueChange={setPesquisaCategoria}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                          <CommandGroup className="max-h-64 overflow-auto">
+                            {categoriasFiltradas.map((categoria) => (
+                              <CommandItem
+                                key={categoria}
+                                value={categoria}
+                                onSelect={(currentValue) => {
+                                  setFormData({ ...formData, categoria: currentValue })
+                                  setPesquisaCategoria(currentValue)
+                                  setComboboxCategoriaAberto(false)
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${formData.categoria === categoria ? "opacity-100" : "opacity-0"}`}
+                                />
+                                {categoria}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDialogCategoriaAberto(true)}
+                    title="Adicionar nova categoria"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               <div>
@@ -347,6 +558,90 @@ export function ProdutosPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog para adicionar novo produto */}
+        <Dialog open={dialogProdutoAberto} onOpenChange={setDialogProdutoAberto}>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Adicionar Novo Produto</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="novoProdutoNome">Nome do Produto</Label>
+                <Input
+                  id="novoProdutoNome"
+                  value={novoProdutoNome}
+                  onChange={(e) => setNovoProdutoNome(e.target.value)}
+                  placeholder="Digite o nome do novo produto"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setDialogProdutoAberto(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={adicionarNovoProdutoNome} disabled={!novoProdutoNome.trim()}>
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para adicionar nova categoria */}
+        <Dialog open={dialogCategoriaAberto} onOpenChange={setDialogCategoriaAberto}>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Adicionar Nova Categoria</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="novaCategoria">Nome da Categoria</Label>
+                <Input
+                  id="novaCategoria"
+                  value={novaCategoria}
+                  onChange={(e) => setNovaCategoria(e.target.value)}
+                  placeholder="Digite o nome da nova categoria"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setDialogCategoriaAberto(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={adicionarNovaCategoria} disabled={!novaCategoria.trim()}>
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para adicionar nova marca */}
+        <Dialog open={dialogMarcaAberto} onOpenChange={setDialogMarcaAberto}>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Adicionar Nova Marca</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="novaMarca">Nome da Marca</Label>
+                <Input
+                  id="novaMarca"
+                  value={novaMarca}
+                  onChange={(e) => setNovaMarca(e.target.value)}
+                  placeholder="Digite o nome da nova marca"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setDialogMarcaAberto(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={adicionarNovaMarca} disabled={!novaMarca.trim()}>
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filtros */}
@@ -437,7 +732,7 @@ export function ProdutosPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {produtosFiltrados.length === 0 ? (
+          {produtosFiltradosLista.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
               {produtos.length === 0
                 ? "Nenhum produto cadastrado"
@@ -445,7 +740,7 @@ export function ProdutosPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {produtosFiltrados.map((produto) => (
+              {produtosFiltradosLista.map((produto) => (
                 <Card key={produto.id} className="border-2 hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
